@@ -2,8 +2,6 @@ package telegram
 
 import (
 	"encoding/json"
-	"fmt"
-	"go/token"
 	"io"
 	"net/http"
 	"net/url"
