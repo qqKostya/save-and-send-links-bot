@@ -21,8 +21,8 @@ type Meta struct {
 }
 
 var (
-	ErrUnknownEventType = errors.New("unknow evenet type")
-	ErrUnknownMetaType  = errors.New("unknow meta type")
+	ErrUnknownEventType = errors.New("unknown event type")
+	ErrUnknownMetaType  = errors.New("unknown meta type")
 )
 
 func New(client *telegram.Client, storage storage.Storage) *Processor {
@@ -49,8 +49,10 @@ func (p *Processor) Fetch(limit int) ([]events.Event, error) {
 	}
 
 	p.offset = updates[len(updates)-1].ID + 1
+
 	return res, nil
 }
+
 func (p *Processor) Process(event events.Event) error {
 	switch event.Type {
 	case events.Message:
@@ -84,6 +86,7 @@ func meta(event events.Event) (Meta, error) {
 
 func event(upd telegram.Update) events.Event {
 	updType := fetchType(upd)
+
 	res := events.Event{
 		Type: updType,
 		Text: fetchText(upd),
@@ -103,6 +106,7 @@ func fetchText(upd telegram.Update) string {
 	if upd.Message == nil {
 		return ""
 	}
+
 	return upd.Message.Text
 }
 

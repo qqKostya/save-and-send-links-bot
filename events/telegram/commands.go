@@ -19,7 +19,7 @@ const (
 func (p *Processor) doCmd(text string, chatID int, username string) error {
 	text = strings.TrimSpace(text)
 
-	log.Printf("got new command '%s' from '%s'", text, username)
+	log.Printf("got new command '%s' from '%s", text, username)
 
 	if isAddCmd(text) {
 		return p.savePage(chatID, text, username)
@@ -37,10 +37,8 @@ func (p *Processor) doCmd(text string, chatID int, username string) error {
 	}
 }
 
-func (p *Processor) savePage(chatID int, pageURL, username string) (err error) {
-	defer func() {
-		err = e.WrapIfErr("can't do cmd save page", err)
-	}()
+func (p *Processor) savePage(chatID int, pageURL string, username string) (err error) {
+	defer func() { err = e.WrapIfErr("can't do command: save page", err) }()
 
 	page := &storage.Page{
 		URL:      pageURL,
@@ -48,11 +46,9 @@ func (p *Processor) savePage(chatID int, pageURL, username string) (err error) {
 	}
 
 	isExists, err := p.storage.IsExists(page)
-
 	if err != nil {
 		return err
 	}
-
 	if isExists {
 		return p.tg.SendMessage(chatID, msgAlreadyExists)
 	}
@@ -69,15 +65,12 @@ func (p *Processor) savePage(chatID int, pageURL, username string) (err error) {
 }
 
 func (p *Processor) sendRandom(chatID int, username string) (err error) {
-	defer func() {
-		err = e.WrapIfErr("can't do command: can't send random", err)
-	}()
+	defer func() { err = e.WrapIfErr("can't do command: can't send random", err) }()
 
 	page, err := p.storage.PickRandom(username)
 	if err != nil && !errors.Is(err, storage.ErrNoSavedPages) {
 		return err
 	}
-
 	if errors.Is(err, storage.ErrNoSavedPages) {
 		return p.tg.SendMessage(chatID, msgNoSavedPages)
 	}
@@ -85,6 +78,7 @@ func (p *Processor) sendRandom(chatID int, username string) (err error) {
 	if err := p.tg.SendMessage(chatID, page.URL); err != nil {
 		return err
 	}
+
 	return p.storage.Remove(page)
 }
 

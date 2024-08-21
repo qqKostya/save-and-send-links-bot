@@ -24,9 +24,7 @@ func New(basePath string) Storage {
 }
 
 func (s Storage) Save(page *storage.Page) (err error) {
-	defer func() {
-		err = e.WrapIfErr("can't save page", err)
-	}()
+	defer func() { err = e.WrapIfErr("can't save page", err) }()
 
 	fPath := filepath.Join(s.basePath, page.UserName)
 
@@ -45,7 +43,6 @@ func (s Storage) Save(page *storage.Page) (err error) {
 	if err != nil {
 		return err
 	}
-
 	defer func() { _ = file.Close() }()
 
 	if err := gob.NewEncoder(file).Encode(page); err != nil {
@@ -56,12 +53,14 @@ func (s Storage) Save(page *storage.Page) (err error) {
 }
 
 func (s Storage) PickRandom(userName string) (page *storage.Page, err error) {
-	defer func() {
-		err = e.WrapIfErr("can't pick random", err)
-	}()
+	defer func() { err = e.WrapIfErr("can't pick random page", err) }()
 
-	fPath := filepath.Join(s.basePath, userName)
-	files, err := os.ReadDir(fPath)
+	path := filepath.Join(s.basePath, userName)
+
+	// 1. check user folder
+	// 2. create folder
+
+	files, err := os.ReadDir(path)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +73,8 @@ func (s Storage) PickRandom(userName string) (page *storage.Page, err error) {
 	n := rand.Intn(len(files))
 
 	file := files[n]
-	return s.decodePage(filepath.Join(fPath, file.Name()))
+
+	return s.decodePage(filepath.Join(path, file.Name()))
 }
 
 func (s Storage) Remove(p *storage.Page) error {
@@ -86,8 +86,9 @@ func (s Storage) Remove(p *storage.Page) error {
 	path := filepath.Join(s.basePath, p.UserName, fileName)
 
 	if err := os.Remove(path); err != nil {
-		errMsg := fmt.Sprintf("can't remove file: %s", path)
-		return e.Wrap(errMsg, err)
+		msg := fmt.Sprintf("can't remove file %s", path)
+
+		return e.Wrap(msg, err)
 	}
 
 	return nil
@@ -96,7 +97,7 @@ func (s Storage) Remove(p *storage.Page) error {
 func (s Storage) IsExists(p *storage.Page) (bool, error) {
 	fileName, err := fileName(p)
 	if err != nil {
-		return false, e.Wrap("can't check if file %s exists", err)
+		return false, e.Wrap("can't check if file exists", err)
 	}
 
 	path := filepath.Join(s.basePath, p.UserName, fileName)
@@ -105,10 +106,11 @@ func (s Storage) IsExists(p *storage.Page) (bool, error) {
 	case errors.Is(err, os.ErrNotExist):
 		return false, nil
 	case err != nil:
-		errMsg := fmt.Sprintf("can't check if file %s exists", path)
-		return false, e.Wrap(errMsg, err)
+		msg := fmt.Sprintf("can't check if file %s exists", path)
 
+		return false, e.Wrap(msg, err)
 	}
+
 	return true, nil
 }
 
@@ -117,7 +119,6 @@ func (s Storage) decodePage(filePath string) (*storage.Page, error) {
 	if err != nil {
 		return nil, e.Wrap("can't decode page", err)
 	}
-
 	defer func() { _ = f.Close() }()
 
 	var p storage.Page
